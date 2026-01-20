@@ -289,24 +289,64 @@ window.actualitzarCarret = function(act, id, qty) {
     $.ajax({ url: 'controladors/c_cart.php', type: 'POST', data: { action: act, product_id: id, quantity: qty }, success: function(html) { $('#cart-items-container').html(html); } });
 };
 
+// Funció millorada per desplegar els detalls
 window.toggleOrderDetails = function(card, orderId) {
+    console.log("Clic detectat a la comanda ID:", orderId); // Xivato 1
+
     const detailsDiv = $(card).find('.order-details-mini');
-    if (detailsDiv.is(':visible')) { detailsDiv.slideUp(); return; }
-    detailsDiv.slideDown();
-    if (detailsDiv.text().includes('Carregant...')) {
-        $.ajax({
-            url: 'controladors/c_orders.php', type: 'GET', data: { action: 'details', id: orderId }, dataType: 'json',
-            success: function(res) {
-                if (res.success && res.detalls) {
-                    let html = '';
-                    res.detalls.forEach(p => {
-                        html += `<div style="display:flex; justify-content:space-between; padding:2px 0; color:#555;"><span>${p.quantitat}x ${p.nom_producte}</span><span>${parseFloat(p.preu_total).toFixed(2)} €</span></div>`;
-                    });
-                    detailsDiv.html(html);
-                }
-            }
-        });
+    
+    // 1. Obrir/Tancar (Animació)
+    if (detailsDiv.is(':visible')) {
+        detailsDiv.slideUp();
+        return;
     }
+    detailsDiv.slideDown();
+
+    // 2. Comprovar si ja hem carregat les dades (fem servir una classe 'loaded')
+    if (detailsDiv.hasClass('loaded')) {
+        console.log("Dades ja carregades anteriorment. No fem petició.");
+        return;
+    }
+
+    // 3. Si no estan carregades, demanem al servidor
+    console.log("Fem petició AJAX per detalls..."); // Xivato 2
+    
+    $.ajax({
+        url: 'controladors/c_orders.php',
+        type: 'GET',
+        data: { action: 'details', id: orderId },
+        dataType: 'json',
+        success: function(response) {
+            console.log("Resposta rebuda:", response); // Xivato 3
+
+            if (response.success && response.detalls) {
+                let html = '';
+                response.detalls.forEach(p => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed #eee; color:#555;">
+                            <span>${p.quantitat}x <strong>${p.nom_producte}</strong></span>
+                            <span>${parseFloat(p.preu_total).toFixed(2)} €</span>
+                        </div>
+                    `;
+                });
+                
+                // Si no hi ha línies, avisem
+                if(response.detalls.length === 0) {
+                    html = '<p style="font-style:italic; color:#999;">No s\'han trobat productes per aquesta comanda.</p>';
+                }
+
+                detailsDiv.html(html);
+                detailsDiv.addClass('loaded'); // MARQUEM COM A CARREGAT
+            } else {
+                detailsDiv.html('<p style="color:red">Error llegint dades.</p>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error AJAX Detalls:", error);
+            console.log(xhr.responseText);
+            detailsDiv.html('<p style="color:red">Error de connexió.</p>');
+        }
+    });
 };
 
 window.openAuthModal = function() { const d = document.getElementById('auth-dialog'); d.classList.remove('show-register'); if (!d.open) d.showModal(); };

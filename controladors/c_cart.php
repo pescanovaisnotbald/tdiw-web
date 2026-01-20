@@ -148,4 +148,4 @@ function mostrarCarret($connexio) {
     echo '  <button class="checkout-btn">Finalitzar Comanda</button>';
     echo '</div>';
 }
-// RECORDA: NO TANQUIS AMB ?> AL FINAL
+?> 
