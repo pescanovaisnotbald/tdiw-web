@@ -2,6 +2,7 @@
 session_start();
 include_once __DIR__ . '/../models/m_connectaBD.php';
 include_once __DIR__ . '/../models/m_productes.php';
+include_once __DIR__ . '/../models/m_comandes.php'; // <--- AQUESTA ÉS LA LÍNIA QUE FALTAVA!
 
 $connexio = connectaBD();
 $accio = $_REQUEST['action'] ?? 'view';
@@ -22,7 +23,6 @@ switch ($accio) {
             $_SESSION['cart'][$product_id] = $quantitat;
         }
         
-        // Retornem el total d'items per actualitzar el comptador del header
         echo array_sum($_SESSION['cart']); 
         break;
     
@@ -49,12 +49,12 @@ switch ($accio) {
             if ($infoProd) {
                 $total_import += ($infoProd['preu'] * $qty);
                 $total_elements += $qty;
-                // Guardem la info per no haver de tornar a consultar la BD després
                 $linies_per_inserir[] = ['producte' => $infoProd, 'qty' => $qty];
             }
         }
 
         // 4. Inserim la Comanda (Capçalera)
+        // Aquesta funció és la que donava error perquè no teníem el fitxer inclòs
         $comanda_id = inserirComanda($connexio, $_SESSION['usuari_id'], $total_import, $total_elements);
 
         if ($comanda_id) {
@@ -81,7 +81,6 @@ switch ($accio) {
         } else {
             $_SESSION['cart'][$product_id] = $quantitat;
         }
-        // Després d'actualitzar, mostrem la vista del carretó actualitzada
         mostrarCarret($connexio);
         break;
 
@@ -95,10 +94,8 @@ switch ($accio) {
     default:
         mostrarCarret($connexio);
         break;
-        
 }
 
-// Funció auxiliar per generar l'HTML del carretó
 function mostrarCarret($connexio) {
     if (empty($_SESSION['cart'])) {
         echo '<div class="empty-cart-message">';
@@ -110,9 +107,8 @@ function mostrarCarret($connexio) {
 
     $total_preu = 0;
     
-    // Iterem sobre els productes de la sessió
     foreach ($_SESSION['cart'] as $id => $qty) {
-        $producte = infoProducte($connexio, $id); // Reutilitzem la teva funció del model
+        $producte = infoProducte($connexio, $id);
         if (!$producte) continue;
 
         $subtotal = $producte['preu'] * $qty;
@@ -144,7 +140,6 @@ function mostrarCarret($connexio) {
         <?php
     }
 
-    // Footer del carretó amb el Total
     echo '<div class="cart-footer">';
     echo '  <div class="cart-total-row">';
     echo '      <span>Total:</span>';
@@ -153,4 +148,4 @@ function mostrarCarret($connexio) {
     echo '  <button class="checkout-btn">Finalitzar Comanda</button>';
     echo '</div>';
 }
-?>
+// RECORDA: NO TANQUIS AMB ?> AL FINAL
