@@ -298,3 +298,78 @@ function showLogin() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
 }
+
+
+// --- FUNCIONS PERFIL D'USUARI ---
+
+// 1. Obrir Modal i Carregar Dades
+function openProfileModal() {
+    const dialog = document.getElementById('profile-dialog');
+    
+    // Fer petició AJAX per obtenir les dades actuals de la BDD
+    $.ajax({
+        url: 'controladors/c_profile.php',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const u = response.data;
+                
+                // Omplim inputs
+                $('#prof_name').val(u.name);
+                $('#prof_email').val(u.email);
+                $('#prof_address').val(u.address);
+                $('#prof_location').val(u.location);
+                $('#prof_postcode').val(u.postcode);
+                
+                // Carreguem la foto (si és null, posem default)
+                const img = u.avatar ? u.avatar : 'default.png';
+                $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
+                
+                dialog.showModal();
+            } else {
+                alert("Error al carregar el perfil.");
+            }
+        }
+    });
+}
+
+// 2. Previsualitzar foto abans de pujar
+$(document).ready(function() {
+    
+    $('#profile-upload').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#profile-preview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 3. Enviar Formulari (Guardar canvis)
+    $('#profile-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Utilitzem FormData per poder enviar arxius (imatges)
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: 'controladors/c_profile.php',
+            type: 'POST',
+            data: formData,
+            contentType: false, // Important per pujar arxius
+            processData: false, // Important per pujar arxius
+            success: function(response) {
+                if (response.success) {
+                    alert("Perfil actualitzat correctament!");
+                    document.getElementById('profile-dialog').close();
+                    // Opcional: Recarregar per veure canvis al header si n'hi ha
+                    // window.location.reload(); 
+                } else {
+                    alert("Error: " + response.message);
+                }
+            }
+        });
+    });
+});

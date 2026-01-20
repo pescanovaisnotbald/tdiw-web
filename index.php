@@ -54,7 +54,7 @@ session_start();
                     </button>
                     <div class="dropdown-menu" id="user-dropdown">
                         <?php if (isset($_SESSION['usuari_id'])) { ?>
-                            <Button class="dropdown-btn">Profile (soon)</Button>
+                            <button class="dropdown-btn" onclick="openProfileModal()">El meu Compte</button>
                             <Button class="dropdown-btn">My Orders (soon)</Button>
                             <Button class="dropdown-btn" onclick="window.location.href='controladors/c_logout.php'" >Log Out</Button>
                         <?php } else { ?>
@@ -145,6 +145,44 @@ session_start();
 
     <div id="cart-items-container" class="cart-body">
         <p>Carregant...</p>
+    </div>
+</dialog>
+
+<dialog id="profile-dialog" class="auth-dialog"> <form method="dialog" class="auth-dialog-close-wrapper">
+        <button class="auth-dialog-close">&times;</button>
+    </form>
+
+    <div class="profile-content">
+        <h2>El meu Compte</h2>
+        
+        <form id="profile-form" enctype="multipart/form-data">
+            <div class="profile-img-section">
+                <div class="profile-img-wrapper">
+                    <img id="profile-preview" src="./assets/img_usuaris/default.png" alt="Foto perfil">
+                </div>
+                <label for="profile-upload" class="profile-upload-btn">Canviar Foto</label>
+                <input type="file" id="profile-upload" name="avatar" accept="image/*" style="display:none;">
+            </div>
+
+            <div class="auth-form" style="display:flex;">
+                <label>Nom Complet</label>
+                <input type="text" id="prof_name" name="name" required>
+
+                <label>Email (No editable)</label>
+                <input type="email" id="prof_email" disabled style="background:#f0f0f0; color:#666;">
+
+                <label>Adreça</label>
+                <input type="text" id="prof_address" name="address" required>
+
+                <label>Població</label>
+                <input type="text" id="prof_location" name="location" required>
+
+                <label>Codi Postal</label>
+                <input type="text" id="prof_postcode" name="postcode" required pattern="^\d{5}$">
+
+                <button type="submit" class="auth-submit">Guardar Canvis</button>
+            </div>
+        </form>
     </div>
 </dialog>
 </body>
