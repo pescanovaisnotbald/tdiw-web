@@ -1,105 +1,128 @@
+/**
+ * FITXER: js/funcions.js
+ * VERSIÓ: Final Consolidada
+ */
+
 $(document).ready(function() {
-  
-  $(document).on('click', '#user-btn', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    $('#user-dropdown').toggleClass('show');
-  });
 
-  $(document).on('click', '#user-dropdown', function(e) {
-    e.stopPropagation();
-  });
+    // ======================================================
+    // 1. NAVEGACIÓ I MENÚS
+    // ======================================================
 
-  $(document).on('click', function() {
-    $('#user-dropdown').removeClass('show');
-  });
-
-  $(document).on('click', '.product-link', function(e) {
-    e.preventDefault();
-    const productId = $(this).attr('id');
-    carregarProducte(productId);
-  });
-
-  $('.auth-form-login').on('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const resposta = await fetch('controladors/c_login.php', {
-      method: 'POST',
-      body: formData
-    });
-    const dades = await resposta.json();
-        
-    if (dades.success) {
-      window.location.reload();
-    } else {
-      alert(dades.message);
-    }
-  });
-
-  $('.auth-form-register').on('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const resposta = await fetch('controladors/c_signup.php', {
-      method: 'POST',
-      body: formData
-    });
-    const dades = await resposta.json();
-        
-    if (dades.success) {
-      window.location.reload();
-    } else {
-      alert(dades.message);
-    }
-  });
-
-  $(document).on('click', '.nav-link, .logo-link', async function(e) {
-    e.preventDefault();
-    const url = $(this).attr('href');
-    
-    const resposta = await fetch(url);
-    const html = await resposta.text();
-    
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const newContent = doc.querySelector('#main-content');
-    
-    if (newContent) {
-      $('#main-content').html(newContent.innerHTML);
-    }
-  });
-
-  // --- LÒGICA DEL BUSCADOR (AMB 'X') ---
-    var wrapper = $('#search-wrapper');
-    var input = wrapper.find('.search-input');
-    var clearBtn = $('#search-clear');
-
-    // 1. Si ja venim d'una cerca (hi ha text), deixem el buscador obert
-    if (input.val().trim() !== "") {
-        wrapper.addClass('active');
-        clearBtn.show();
-    }
-
-    // 2. Click a la Lupa
-    $('#search-toggle').click(function(e) {
+    // Menú Usuari (Dropdown)
+    $(document).on('click', '#user-btn', function(e) {
+        e.stopPropagation();
         e.preventDefault();
+        $('#user-dropdown').toggleClass('show');
+    });
+
+    $(document).on('click', '#user-dropdown', function(e) {
+        e.stopPropagation(); // Evita que es tanqui si cliques a dins
+    });
+
+    $(document).on('click', function() {
+        $('#user-dropdown').removeClass('show'); // Tanca si cliques a fora
+    });
+
+    // Navegació AJAX (Càrrega de pàgines sense recarregar)
+    $(document).on('click', '.nav-link, .logo-link', async function(e) {
+        // Només interceptem si no és un enllaç de descàrrega o extern
+        if ($(this).attr('href').indexOf('index.php') !== -1) {
+            e.preventDefault();
+            const url = $(this).attr('href');
+            
+            try {
+                const resposta = await fetch(url);
+                const html = await resposta.text();
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.querySelector('#main-content');
+                
+                if (newContent) {
+                    $('#main-content').html(newContent.innerHTML);
+                    // Actualitzem la URL del navegador
+                    window.history.pushState({}, '', url);
+                }
+            } catch (error) {
+                console.error("Error carregant pàgina:", error);
+            }
+        }
+    });
+
+
+    // ======================================================
+    // 2. AUTENTICACIÓ (LOGIN / REGISTRE)
+    // ======================================================
+
+    $('.auth-form-login').on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
         
-        // Si està tancat, l'obrim
+        try {
+            const resposta = await fetch('controladors/c_login.php', {
+                method: 'POST',
+                body: formData
+            });
+            const dades = await resposta.json();
+            
+            if (dades.success) {
+                window.location.reload();
+            } else {
+                alert(dades.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de connexió al fer login.");
+        }
+    });
+
+    $('.auth-form-register').on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        try {
+            const resposta = await fetch('controladors/c_signup.php', {
+                method: 'POST',
+                body: formData
+            });
+            const dades = await resposta.json();
+            
+            if (dades.success) {
+                window.location.reload();
+            } else {
+                alert(dades.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de connexió al registrar.");
+        }
+    });
+
+
+    // ======================================================
+    // 3. CERCADOR HEADER (LUPA + X)
+    // ======================================================
+    
+    // Delegació per si el header es recarrega
+    $(document).on('click', '#search-toggle', function(e) {
+        e.preventDefault();
+        var wrapper = $('#search-wrapper');
+        var input = wrapper.find('.search-input');
+        
         if (!wrapper.hasClass('active')) {
             wrapper.addClass('active');
             setTimeout(function(){ input.focus(); }, 100);
-        } 
-        // Si està obert i té text, fem submit
-        else if (input.val().trim() !== "") {
+        } else if (input.val().trim() !== "") {
             $('#search-form').submit();
-        } 
-        // Si està obert però buit, el tanquem
-        else {
+        } else {
             wrapper.removeClass('active');
         }
     });
 
-    // 3. Mostrar/Amagar la 'X' mentre escrivim
-    input.on('input', function() {
+    // Mostrar/Amagar la X
+    $(document).on('input', '.search-input', function() {
+        var clearBtn = $('#search-clear');
         if ($(this).val().trim() !== "") {
             clearBtn.show();
         } else {
@@ -107,75 +130,73 @@ $(document).ready(function() {
         }
     });
 
-    // 4. Click a la 'X'
-    clearBtn.click(function() {
-        input.val(''); // Esborrar text visualment
-        clearBtn.hide(); // Amagar la X
-        input.focus(); // Mantenir el focus
-
-        // OPCIONAL: Si vols que al clicar la X es recarregui la pàgina mostrant TOTS els productes automàticament:
-        // window.location.href = 'index.php?accio=resource_products';
-        
-        // O si prefereixes que només esborri i l'usuari decideixi si tancar o buscar una altra cosa, deixa l'opció de dalt comentada.
-        // Si estem en una cerca activa i l'usuari clica X, potser sí vol "cancel·lar cerca".
-        // Jo recomano fer un submit buit per "netejar":
-        $('#search-form').submit(); 
+    // Botó X (Netejar)
+    $(document).on('click', '#search-clear', function() {
+        var input = $('.search-input');
+        input.val(''); 
+        $(this).hide(); 
+        input.focus(); 
+        $('#search-form').submit(); // Opcional: recarregar resultats buits
     });
 
-    $('.filters-sidebar form').on('submit', function(e) {
-        e.preventDefault(); // 1. ATUREM la recàrrega de la pàgina (el comportament per defecte)
+    // Inicialització visual si ja hi ha text
+    if ($('.search-input').val() && $('.search-input').val().trim() !== "") {
+        $('#search-wrapper').addClass('active');
+        $('#search-clear').show();
+    }
 
-        var form = $(this);
-        var url = 'controladors/c_productes.php'; // On enviem la petició
+
+    // ======================================================
+    // 4. FILTRES LATERALS (AJAX)
+    // ======================================================
+
+    $(document).on('submit', '.filters-sidebar form', function(e) {
+        e.preventDefault();
         
-        // 2. Agafem totes les dades del formulari (categories, preu, cerca oculta...)
-        // I afegim '&ajax=true' perquè el PHP sàpiga què ha de fer
+        var form = $(this);
+        var url = 'controladors/c_productes.php';
         var dades = form.serialize() + '&ajax=true';
 
-        // 3. Fem la màgia (AJAX)
         $.ajax({
             type: "GET",
             url: url,
             data: dades,
             success: function(respostaHTML) {
-                // 4. Quan el servidor respon, buidem el grid actual i posem el nou contingut
                 $('.products-grid').html(respostaHTML);
             },
             error: function() {
-                alert("Hi ha hagut un error al filtrar els productes.");
+                alert("Error filtrant productes.");
             }
         });
     });
-
-    // Opcional: Si vols que quan canviïn l'ordre (select) també sigui automàtic sense botó:
-    $('select[name="orden"]').change(function() {
-        $('.filters-sidebar form').submit(); // Dispara l'esdeveniment de dalt
+    
+    // Ordre automàtic
+    $(document).on('change', 'select[name="orden"]', function() {
+        $('.filters-sidebar form').submit();
     });
 
-    // ==========================================
-    // LÒGICA DEL CARRETÓ (SHOPPING CART)
-    // ==========================================
 
-    // 1. Obrir el Modal del Carretó
-    $('#cart-btn').click(function() {
+    // ======================================================
+    // 5. CARRETÓ DE LA COMPRA
+    // ======================================================
+
+    // Obrir Modal Carretó
+    $(document).on('click', '#cart-btn', function() {
         var dialog = document.getElementById('cart-dialog');
         dialog.showModal();
-        carregarCarret(); // Cridem la funció per obtenir l'HTML
+        carregarCarret();
     });
 
-    // 2. Afegir al Carretó (Des del modal de producte)
-    // CORRECCIÓ: Fem servir $(document).on(...) perquè el botó funcioni 
-    // encara que canviïs de pàgina o recarreguis contingut.
+    // AFEGIR PRODUCTE (Des del modal de detall)
+    // Fem servir .on() per assegurar que funciona encara que canviïs de pàgina
     $(document).on('click', '#modal-add-to-cart-btn', function(e) {
         e.preventDefault();
         
         var btn = $(this);
         var productId = btn.data('id'); 
         
-        console.log("Afegint producte ID:", productId); // Per depurar
-
         if (!productId) {
-            alert("Error: No s'ha trobat el producte.");
+            alert("Error: No s'ha trobat la ID del producte.");
             return;
         }
 
@@ -184,41 +205,35 @@ $(document).ready(function() {
             type: 'POST',
             data: { action: 'add', product_id: productId, quantity: 1 },
             success: function(totalItems) {
-                // Tanquem el modal de producte
                 document.getElementById('product-dialog').close();
                 
-                // Actualitzem el contador visual del header
-                if(totalItems > 0) {
-                    $('#cart-count').text(totalItems).show();
-                }
+                // Actualitzar badge (opcional)
+                /* if(totalItems > 0) $('#cart-count').text(totalItems).show(); */
                 
                 alert("Producte afegit al carretó!");
             },
             error: function() {
-                alert("Error de connexió amb el servidor.");
+                alert("Error de connexió afegint al carretó.");
             }
         });
     });
 
-    // --- FUNCIONS DINÀMIQUES DINS DEL CARRETÓ ---
-    // Com que l'HTML del carretó ve per AJAX, hem de fer servir delegació (.on)
-
-    // 3. Botó Eliminar (Paperera)
-    $('#cart-items-container').on('click', '.cart-remove-btn', function() {
+    // Eliminar del carretó
+    $(document).on('click', '.cart-remove-btn', function() {
         var id = $(this).data('id');
         actualitzarCarret('remove', id, 0);
     });
 
-    // 4. Botó Més (+)
-    $('#cart-items-container').on('click', '.qty-btn.plus', function() {
+    // Incrementar quantitat (+)
+    $(document).on('click', '.qty-btn.plus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
         var currentQty = parseInt(input.val());
         actualitzarCarret('update', id, currentQty + 1);
     });
 
-    // 5. Botó Menys (-)
-    $('#cart-items-container').on('click', '.qty-btn.minus', function() {
+    // Decrementar quantitat (-)
+    $(document).on('click', '.qty-btn.minus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
         var currentQty = parseInt(input.val());
@@ -226,104 +241,191 @@ $(document).ready(function() {
         if (currentQty > 1) {
             actualitzarCarret('update', id, currentQty - 1);
         } else {
-            // Si és 1 i baixem, preguntem si vol eliminar o ho fem directe
              actualitzarCarret('remove', id, 0);
         }
     });
 
-    // --- FUNCIONS AUXILIARS ---
-
-    function carregarCarret() {
-        $.ajax({
-            url: 'controladors/c_cart.php',
-            type: 'GET',
-            data: { action: 'view' },
-            success: function(html) {
-                $('#cart-items-container').html(html);
-            }
-        });
-    }
-
-    function actualitzarCarret(accio, id, qty) {
-        $.ajax({
-            url: 'controladors/c_cart.php',
-            type: 'POST',
-            data: { action: accio, product_id: id, quantity: qty },
-            success: function(html) {
-                // El PHP ens retorna el carretó sencer actualitzat, així que el pintem de nou
-                $('#cart-items-container').html(html);
-            }
-        });
-    }
-
+    // FINALITZAR COMPRA (CHECKOUT)
     $(document).on('click', '.checkout-btn', function(e) {
         e.preventDefault();
         
-        // Confirmació senzilla
-        if(!confirm("Estàs segur que vols finalitzar la comanda?")) return;
+        if(!confirm("Vols finalitzar la comanda ara?")) return;
 
         $.ajax({
             url: 'controladors/c_cart.php',
             type: 'POST',
             data: { action: 'checkout' },
-            dataType: 'json', // Esperem un JSON de resposta
+            dataType: 'json',
             success: function(response) {
                 if (response.success) {
                     alert("Comanda realitzada amb èxit!");
-                    
-                    // Tanquem el modal
                     document.getElementById('cart-dialog').close();
-                    
-                    // Actualitzem el contador del carretó a 0
                     $('#cart-count').hide().text('0');
-                    
-                    // Opcional: Recarregar pàgina
-                    // window.location.reload();
                 } else {
                     if (response.message === 'login_required') {
                         alert("Has d'iniciar sessió per comprar.");
                         document.getElementById('cart-dialog').close();
-                        openAuthModal(); // Obrim el modal de login
+                        openAuthModal();
                     } else if (response.message === 'empty_cart') {
-                        alert("El carretó està buit.");
+                        alert("El carretó és buit.");
                     } else {
-                        alert("Hi ha hagut un error al processar la comanda.");
+                        alert("Error al guardar la comanda.");
                     }
                 }
             },
-            error: function() {
-                alert("Error de comunicació amb el servidor.");
+            error: function(xhr, status, error) {
+                console.error("Error checkout:", error);
+                alert("Error de comunicació. Revisa que no hi hagi espais al final dels fitxers PHP (Models).");
             }
         });
     });
-    
-});
 
+
+    // ======================================================
+    // 6. PERFIL D'USUARI (MI CUENTA)
+    // ======================================================
+
+    // Previsualitzar foto
+    $(document).on('change', '#profile-upload', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#profile-preview').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Guardar canvis perfil
+    $(document).on('submit', '#profile-form', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: 'controladors/c_profile.php',
+            type: 'POST',
+            data: formData,
+            contentType: false, 
+            processData: false, 
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert("Perfil actualitzat correctament!");
+                    document.getElementById('profile-dialog').close();
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error("Error perfil:", xhr.responseText);
+                alert("Error al guardar el perfil.");
+            }
+        });
+    });
+
+    // Clic en un producte del llistat
+    $(document).on('click', '.product-link', function(e) {
+        e.preventDefault();
+        const productId = $(this).attr('id');
+        carregarProducte(productId);
+    });
+
+}); // FI DEL $(document).ready
+
+
+// ======================================================
+// FUNCIONS GLOBALS (FORA DEL READY)
+// ======================================================
+
+// Funció per carregar detalls del producte al modal
 function carregarProducte(productId) {
     $.ajax({
         url: 'controladors/c_productes.php',
         type: 'GET',
         data: { product_id: productId },
         success: function(response) {
-            var p = JSON.parse(response);
+            // Intentem parsejar per si de cas arriba text brut
+            try {
+                var p = typeof response === "object" ? response : JSON.parse(response);
+            } catch (e) {
+                console.error("Error parsing JSON producte:", e);
+                return;
+            }
 
-            // Omplim títol, preu, etc...
             $('#modal-product-title').text(p.nom);
             $('#modal-product-price').text(p.preu + " €");
             $('#modal-product-description').text(p.descripcio);
             $('#modal-product-image').attr('src', './assets/productes/' + p.imatge);
             
-            // --- IMPORTANTÍSSIM: GUARDAR LA ID AL BOTÓ ---
-            // Això enllaça el botó amb el producte actual
+            // GUARDAR ID AL BOTÓ (CLAU PERQUÈ FUNCIONI EL CARRETÓ)
             $('#modal-add-to-cart-btn').data('id', p.product_id); 
-            // ---------------------------------------------
 
             document.getElementById('product-dialog').showModal();
         },
-        error: function() { alert('Error carregarProducte'); }
+        error: function() { alert('Error carregant informació del producte'); }
     });
 }
 
+// Funció per carregar l'HTML del carretó
+function carregarCarret() {
+    $.ajax({
+        url: 'controladors/c_cart.php',
+        type: 'GET',
+        data: { action: 'view' },
+        success: function(html) {
+            $('#cart-items-container').html(html);
+        }
+    });
+}
+
+// Funció per actualitzar ítems del carretó
+function actualitzarCarret(accio, id, qty) {
+    $.ajax({
+        url: 'controladors/c_cart.php',
+        type: 'POST',
+        data: { action: accio, product_id: id, quantity: qty },
+        success: function(html) {
+            $('#cart-items-container').html(html);
+        }
+    });
+}
+
+// Funció per obrir el modal de perfil i carregar dades
+function openProfileModal() {
+    const dialog = document.getElementById('profile-dialog');
+    
+    $.ajax({
+        url: 'controladors/c_profile.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                const u = response.data;
+                
+                $('#prof_name').val(u.name);
+                $('#prof_email').val(u.email);
+                $('#prof_address').val(u.address);
+                $('#prof_location').val(u.location);
+                $('#prof_postcode').val(u.postcode);
+                
+                const img = u.avatar ? u.avatar : 'default.png';
+                $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
+                
+                dialog.showModal();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error AJAX Perfil:", error);
+            console.log("Resposta rebuda:", xhr.responseText);
+            alert("No s'han pogut carregar les dades. Revisa la consola.");
+        }
+    });
+}
+
+// Helpers per modals d'autenticació
 function openAuthModal() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
@@ -339,78 +441,3 @@ function showLogin() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
 }
-
-
-// --- FUNCIONS PERFIL D'USUARI ---
-
-// 1. Obrir Modal i Carregar Dades
-function openProfileModal() {
-    const dialog = document.getElementById('profile-dialog');
-    
-    // Fer petició AJAX per obtenir les dades actuals de la BDD
-    $.ajax({
-        url: 'controladors/c_profile.php',
-        type: 'GET',
-        success: function(response) {
-            if (response.success) {
-                const u = response.data;
-                
-                // Omplim inputs
-                $('#prof_name').val(u.name);
-                $('#prof_email').val(u.email);
-                $('#prof_address').val(u.address);
-                $('#prof_location').val(u.location);
-                $('#prof_postcode').val(u.postcode);
-                
-                // Carreguem la foto (si és null, posem default)
-                const img = u.avatar ? u.avatar : 'default.png';
-                $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
-                
-                dialog.showModal();
-            } else {
-                alert("Error al carregar el perfil.");
-            }
-        }
-    });
-}
-
-// 2. Previsualitzar foto abans de pujar
-$(document).ready(function() {
-    
-    $('#profile-upload').change(function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $('#profile-preview').attr('src', e.target.result);
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // 3. Enviar Formulari (Guardar canvis)
-    $('#profile-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        // Utilitzem FormData per poder enviar arxius (imatges)
-        const formData = new FormData(this);
-        
-        $.ajax({
-            url: 'controladors/c_profile.php',
-            type: 'POST',
-            data: formData,
-            contentType: false, // Important per pujar arxius
-            processData: false, // Important per pujar arxius
-            success: function(response) {
-                if (response.success) {
-                    alert("Perfil actualitzat correctament!");
-                    document.getElementById('profile-dialog').close();
-                    // Opcional: Recarregar per veure canvis al header si n'hi ha
-                    // window.location.reload(); 
-                } else {
-                    alert("Error: " + response.message);
-                }
-            }
-        });
-    });
-});

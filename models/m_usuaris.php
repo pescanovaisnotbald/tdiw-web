@@ -50,6 +50,5 @@ function actualitzarUsuari($conn, $id, $dades) {
     
     return pg_query_params($conn, $sql, $params);
 }
-
 ?>
 
