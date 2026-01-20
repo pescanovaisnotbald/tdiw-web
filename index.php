@@ -54,7 +54,7 @@ session_start();
                     </button>
                     <div class="dropdown-menu" id="user-dropdown">
                         <?php if (isset($_SESSION['usuari_id'])) { ?>
-                            <button class="dropdown-btn" onclick="openProfileModal()">El meu Compte</button>
+                            <button class="dropdown-btn" id="btn-open-profile">El meu Compte</button>
                             <Button class="dropdown-btn">My Orders (soon)</Button>
                             <Button class="dropdown-btn" onclick="window.location.href='controladors/c_logout.php'" >Log Out</Button>
                         <?php } else { ?>

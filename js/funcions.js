@@ -331,6 +331,42 @@ $(document).ready(function() {
         carregarProducte(productId);
     });
 
+    $(document).on('click', '#btn-open-profile', function(e) {
+        e.preventDefault();
+        
+        console.log("Obrint perfil..."); // Para ver si funciona en consola
+        const dialog = document.getElementById('profile-dialog');
+        
+        $.ajax({
+            url: 'controladors/c_profile.php',
+            type: 'GET',
+            dataType: 'json', 
+            success: function(response) {
+                if (response.success) {
+                    const u = response.data;
+                    
+                    $('#prof_name').val(u.name);
+                    $('#prof_email').val(u.email);
+                    $('#prof_address').val(u.address);
+                    $('#prof_location').val(u.location);
+                    $('#prof_postcode').val(u.postcode);
+                    
+                    const img = u.avatar ? u.avatar : 'default.png';
+                    $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
+                    
+                    dialog.showModal();
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error AJAX Perfil:", error);
+                // Si sale este error, es que NO has borrado los ?> de los PHP
+                alert("Error de comunicación. ¡Asegúrate de haber borrado los '?>' finales en m_usuaris.php!");
+            }
+        });
+    });
+
 }); // FI DEL $(document).ready
 
 
