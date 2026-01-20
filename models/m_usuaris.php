@@ -26,7 +26,7 @@ function obtenirDadesUsuari($conn, $id) {
 }
 
 function actualitzarUsuari($conn, $id, $dades) {
-    // Si hi ha avatar, actualitzem tot, si no, mantenim la foto antiga
+    // Si hi ha avatar, actualitzem tot; si no, mantenim la foto antiga
     if (isset($dades['avatar'])) {
         $sql = "UPDATE usuari SET name=$1, address=$2, location=$3, postcode=$4, avatar=$5 WHERE usuari_id=$6";
         $params = [
@@ -50,5 +50,3 @@ function actualitzarUsuari($conn, $id, $dades) {
     
     return pg_query_params($conn, $sql, $params);
 }
-?>
-
