@@ -1,6 +1,6 @@
 /**
  * FITXER: js/funcions.js
- * VERSIÓ: COMPLETA I CORREGIDA
+ * VERSIÓ: COMPLETA I DEFINITIVA
  */
 
 $(document).ready(function() {
@@ -55,7 +55,8 @@ $(document).ready(function() {
     // 2. AUTENTICACIÓ (LOGIN / REGISTRE)
     // ======================================================
 
-    $('.auth-form-login').on('submit', async function(e) {
+    // Login
+    $(document).on('submit', '.auth-form-login', async function(e) {
         e.preventDefault();
         const formData = new FormData(this);
         
@@ -64,7 +65,6 @@ $(document).ready(function() {
                 method: 'POST',
                 body: formData
             });
-            // Important: Això fallarà si els fitxers PHP tenen espais o ?> al final
             const dades = await resposta.json();
             
             if (dades.success) {
@@ -74,11 +74,12 @@ $(document).ready(function() {
             }
         } catch (error) {
             console.error(error);
-            alert("Error al fer login. Revisa la consola (F12) per veure si el PHP retorna errors.");
+            alert("Error al fer login. Si us plau, revisa que no hi hagi espais o '?>' al final dels fitxers PHP.");
         }
     });
 
-    $('.auth-form-register').on('submit', async function(e) {
+    // Registre
+    $(document).on('submit', '.auth-form-register', async function(e) {
         e.preventDefault();
         const formData = new FormData(this);
         
@@ -96,7 +97,7 @@ $(document).ready(function() {
             }
         } catch (error) {
             console.error(error);
-            alert("Error al registrar. Revisa la consola.");
+            alert("Error al registrar.");
         }
     });
 
@@ -137,7 +138,7 @@ $(document).ready(function() {
         $('#search-form').submit(); 
     });
 
-    // Inicialització visual si ja hi ha text
+    // Inicialització visual si ja hi ha text (en carregar)
     if ($('.search-input').val() && $('.search-input').val().trim() !== "") {
         $('#search-wrapper').addClass('active');
         $('#search-clear').show();
@@ -153,6 +154,7 @@ $(document).ready(function() {
         
         var form = $(this);
         var url = 'controladors/c_productes.php';
+        // Afegim ajax=true perquè el PHP només torni les targetes
         var dades = form.serialize() + '&ajax=true';
 
         $.ajax({
@@ -168,6 +170,7 @@ $(document).ready(function() {
         });
     });
     
+    // Ordre automàtic en canviar el desplegable
     $(document).on('change', 'select[name="orden"]', function() {
         $('.filters-sidebar form').submit();
     });
@@ -192,7 +195,7 @@ $(document).ready(function() {
         var productId = btn.data('id'); 
         
         if (!productId) {
-            alert("Error: No s'ha trobat la ID del producte. Has obert bé el modal?");
+            alert("Error: No s'ha trobat la ID del producte.");
             return;
         }
 
@@ -202,10 +205,8 @@ $(document).ready(function() {
             data: { action: 'add', product_id: productId, quantity: 1 },
             success: function(totalItems) {
                 document.getElementById('product-dialog').close();
-                // Actualitzar badge si el tens
-                if($('#cart-count').length) {
-                    $('#cart-count').text(totalItems).show();
-                }
+                // Si tens el badge al header, descomenta això:
+                // if($('#cart-count').length) $('#cart-count').text(totalItems).show();
                 alert("Producte afegit al carretó!");
             },
             error: function() {
@@ -220,7 +221,7 @@ $(document).ready(function() {
         actualitzarCarret('remove', id, 0);
     });
 
-    // Incrementar/Decrementar quantitat
+    // Incrementar quantitat
     $(document).on('click', '.qty-btn.plus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
@@ -228,6 +229,7 @@ $(document).ready(function() {
         actualitzarCarret('update', id, currentQty + 1);
     });
 
+    // Decrementar quantitat
     $(document).on('click', '.qty-btn.minus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
@@ -255,7 +257,7 @@ $(document).ready(function() {
                 if (response.success) {
                     alert("Comanda realitzada amb èxit!");
                     document.getElementById('cart-dialog').close();
-                    $('#cart-count').hide().text('0');
+                    if($('#cart-count').length) $('#cart-count').hide().text('0');
                 } else {
                     if (response.message === 'login_required') {
                         alert("Has d'iniciar sessió per comprar.");
@@ -277,16 +279,16 @@ $(document).ready(function() {
 
 
     // ======================================================
-    // 6. PERFIL D'USUARI (SOLUCIÓ DEFINITIVA)
+    // 6. PERFIL D'USUARI (MI CUENTA)
     // ======================================================
 
-    // Obrir Modal (Fent servir el nou ID #btn-open-profile)
+    // Obrir Modal (IMPORTANT: Usem el nou ID #btn-open-profile)
     $(document).on('click', '#btn-open-profile', function(e) {
         e.preventDefault();
+        console.log("Intentant carregar perfil..."); // Per depurar
+
         const dialog = document.getElementById('profile-dialog');
         
-        console.log("Intentant carregar perfil...");
-
         $.ajax({
             url: 'controladors/c_profile.php',
             type: 'GET',
@@ -301,6 +303,7 @@ $(document).ready(function() {
                     $('#prof_location').val(u.location);
                     $('#prof_postcode').val(u.postcode);
                     
+                    // Si no hi ha avatar, posem default.png
                     const img = u.avatar ? u.avatar : 'default.png';
                     $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
                     
@@ -310,9 +313,8 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                console.error("Error AJAX Perfil:", error);
-                console.log("Resposta rebuda:", xhr.responseText);
-                alert("Error carregant el perfil. Molt probablement tens espais o '?>' al final de 'models/m_usuaris.php'.");
+                console.error("Error AJAX Perfil:", xhr.responseText);
+                alert("Error carregant el perfil. Revisa la consola (F12). \nProbablement tens '?>' al final dels fitxers PHP.");
             }
         });
     });
@@ -356,11 +358,61 @@ $(document).ready(function() {
         });
     });
 
-    // Clic en un producte del llistat
+    // Clic en un producte del llistat (Grid)
     $(document).on('click', '.product-link', function(e) {
         e.preventDefault();
         const productId = $(this).attr('id');
         carregarProducte(productId);
+    });
+
+    // ======================================================
+    // 7. HISTORIAL DE COMANDES (NOU)
+    // ======================================================
+
+    // Obrir modal de comandes
+    $(document).on('click', '#btn-orders', function(e) {
+        e.preventDefault();
+        const dialog = document.getElementById('orders-dialog');
+        const container = $('#orders-list');
+        
+        container.html('<p style="text-align:center">Carregant...</p>');
+        dialog.showModal();
+
+        // Demanem la llista al servidor
+        $.ajax({
+            url: 'controladors/c_orders.php',
+            type: 'GET',
+            data: { action: 'list' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.comandes && response.comandes.length > 0) {
+                    let html = '';
+                    response.comandes.forEach(function(order) {
+                        // Creem una targeta per cada comanda
+                        html += `
+                            <div class="order-card" onclick="toggleOrderDetails(this, '${order.comanda_id}')">
+                                <div class="order-header">
+                                    <div>
+                                        <span style="font-weight:bold; color:#333;">${order.data_creació}</span>
+                                        <span style="font-size:0.85rem; color:#666; margin-left:10px;">(${order.número_elements} articles)</span>
+                                    </div>
+                                    <div style="font-weight:bold; color:#009B4D;">${parseFloat(order.import_total).toFixed(2)} €</div>
+                                </div>
+                                <div id="details-${order.comanda_id}" class="order-details-mini" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:5px; font-size:0.9rem;">
+                                    Carregant productes...
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.html(html);
+                } else {
+                    container.html('<p style="text-align:center; padding:20px;">Encara no has fet cap comanda.</p>');
+                }
+            },
+            error: function() {
+                container.html('<p style="color:red; text-align:center;">Error carregant comandes.</p>');
+            }
+        });
     });
 
 }); // FI DEL $(document).ready
@@ -419,6 +471,7 @@ function actualitzarCarret(accio, id, qty) {
     });
 }
 
+// Helpers per modals d'autenticació
 function openAuthModal() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
@@ -434,3 +487,42 @@ function showLogin() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
 }
+
+// Funció per desplegar els detalls d'una comanda (Tipus acordió)
+window.toggleOrderDetails = function(card, orderId) {
+    // Busquem el div de detalls DINS de la carta clicada
+    const detailsDiv = $(card).find('.order-details-mini');
+    
+    // Si està visible, l'amaguem (toggle)
+    if (detailsDiv.is(':visible')) {
+        detailsDiv.slideUp();
+        return;
+    }
+
+    // Si està ocult, el mostrem
+    detailsDiv.slideDown();
+
+    // Si encara té el text "Carregant...", fem la petició AJAX
+    if (detailsDiv.text().includes('Carregant...')) {
+        $.ajax({
+            url: 'controladors/c_orders.php',
+            type: 'GET',
+            data: { action: 'details', id: orderId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.detalls) {
+                    let html = '';
+                    response.detalls.forEach(prod => {
+                        html += `
+                            <div style="display:flex; justify-content:space-between; padding:2px 0; color:#555;">
+                                <span>${prod.quantitat}x ${prod.nom_producte}</span>
+                                <span>${parseFloat(prod.preu_total).toFixed(2)} €</span>
+                            </div>
+                        `;
+                    });
+                    detailsDiv.html(html);
+                }
+            }
+        });
+    }
+};

@@ -869,3 +869,26 @@ footer {
 .profile-upload-btn:hover {
     color: #009B4D;
 }
+
+/* --- ESTILS HISTORIAL COMANDES --- */
+.order-card {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    background: #f9f9f9;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background 0.2s;
+}
+
+.order-card:hover {
+    background: #fff;
+    border-color: #009B4D;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

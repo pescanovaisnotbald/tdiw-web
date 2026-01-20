@@ -55,7 +55,7 @@ session_start();
                     <div class="dropdown-menu" id="user-dropdown">
                         <?php if (isset($_SESSION['usuari_id'])) { ?>
                             <button class="dropdown-btn" id="btn-open-profile">El meu Compte</button>
-                            <Button class="dropdown-btn">My Orders (soon)</Button>
+                            <button class="dropdown-btn" id="btn-orders">Les meves Comandes</button>
                             <Button class="dropdown-btn" onclick="window.location.href='controladors/c_logout.php'" >Log Out</Button>
                         <?php } else { ?>
                             <Button class="dropdown-btn" onclick="openAuthModal()">Log In</Button>
@@ -185,5 +185,19 @@ session_start();
         </form>
     </div>
 </dialog>
+
+<dialog id="orders-dialog" class="auth-dialog" style="max-width: 600px;">
+    <form method="dialog" class="auth-dialog-close-wrapper">
+        <button class="auth-dialog-close">&times;</button>
+    </form>
+    
+    <div class="orders-content">
+        <h2 style="text-align:center; color:#009B4D; margin-bottom:20px;">Historial de Comandes</h2>
+        <div id="orders-list" class="orders-list">
+            <p>Carregant...</p>
+        </div>
+    </div>
+</dialog>
+
 </body>
 </html>
