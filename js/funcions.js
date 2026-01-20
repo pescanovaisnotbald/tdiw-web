@@ -1,6 +1,6 @@
 /**
  * FITXER: js/funcions.js
- * VERSIÓ: Final Consolidada
+ * VERSIÓ: COMPLETA I CORREGIDA
  */
 
 $(document).ready(function() {
@@ -26,8 +26,8 @@ $(document).ready(function() {
 
     // Navegació AJAX (Càrrega de pàgines sense recarregar)
     $(document).on('click', '.nav-link, .logo-link', async function(e) {
-        // Només interceptem si no és un enllaç de descàrrega o extern
-        if ($(this).attr('href').indexOf('index.php') !== -1) {
+        // Només interceptem si és un enllaç intern a index.php
+        if ($(this).attr('href') && $(this).attr('href').indexOf('index.php') !== -1) {
             e.preventDefault();
             const url = $(this).attr('href');
             
@@ -41,7 +41,7 @@ $(document).ready(function() {
                 
                 if (newContent) {
                     $('#main-content').html(newContent.innerHTML);
-                    // Actualitzem la URL del navegador
+                    // Actualitzem la URL del navegador sense recarregar
                     window.history.pushState({}, '', url);
                 }
             } catch (error) {
@@ -64,6 +64,7 @@ $(document).ready(function() {
                 method: 'POST',
                 body: formData
             });
+            // Important: Això fallarà si els fitxers PHP tenen espais o ?> al final
             const dades = await resposta.json();
             
             if (dades.success) {
@@ -73,7 +74,7 @@ $(document).ready(function() {
             }
         } catch (error) {
             console.error(error);
-            alert("Error de connexió al fer login.");
+            alert("Error al fer login. Revisa la consola (F12) per veure si el PHP retorna errors.");
         }
     });
 
@@ -95,7 +96,7 @@ $(document).ready(function() {
             }
         } catch (error) {
             console.error(error);
-            alert("Error de connexió al registrar.");
+            alert("Error al registrar. Revisa la consola.");
         }
     });
 
@@ -104,7 +105,6 @@ $(document).ready(function() {
     // 3. CERCADOR HEADER (LUPA + X)
     // ======================================================
     
-    // Delegació per si el header es recarrega
     $(document).on('click', '#search-toggle', function(e) {
         e.preventDefault();
         var wrapper = $('#search-wrapper');
@@ -120,7 +120,6 @@ $(document).ready(function() {
         }
     });
 
-    // Mostrar/Amagar la X
     $(document).on('input', '.search-input', function() {
         var clearBtn = $('#search-clear');
         if ($(this).val().trim() !== "") {
@@ -130,13 +129,12 @@ $(document).ready(function() {
         }
     });
 
-    // Botó X (Netejar)
     $(document).on('click', '#search-clear', function() {
         var input = $('.search-input');
         input.val(''); 
         $(this).hide(); 
         input.focus(); 
-        $('#search-form').submit(); // Opcional: recarregar resultats buits
+        $('#search-form').submit(); 
     });
 
     // Inicialització visual si ja hi ha text
@@ -170,7 +168,6 @@ $(document).ready(function() {
         });
     });
     
-    // Ordre automàtic
     $(document).on('change', 'select[name="orden"]', function() {
         $('.filters-sidebar form').submit();
     });
@@ -188,7 +185,6 @@ $(document).ready(function() {
     });
 
     // AFEGIR PRODUCTE (Des del modal de detall)
-    // Fem servir .on() per assegurar que funciona encara que canviïs de pàgina
     $(document).on('click', '#modal-add-to-cart-btn', function(e) {
         e.preventDefault();
         
@@ -196,7 +192,7 @@ $(document).ready(function() {
         var productId = btn.data('id'); 
         
         if (!productId) {
-            alert("Error: No s'ha trobat la ID del producte.");
+            alert("Error: No s'ha trobat la ID del producte. Has obert bé el modal?");
             return;
         }
 
@@ -206,10 +202,10 @@ $(document).ready(function() {
             data: { action: 'add', product_id: productId, quantity: 1 },
             success: function(totalItems) {
                 document.getElementById('product-dialog').close();
-                
-                // Actualitzar badge (opcional)
-                /* if(totalItems > 0) $('#cart-count').text(totalItems).show(); */
-                
+                // Actualitzar badge si el tens
+                if($('#cart-count').length) {
+                    $('#cart-count').text(totalItems).show();
+                }
                 alert("Producte afegit al carretó!");
             },
             error: function() {
@@ -224,7 +220,7 @@ $(document).ready(function() {
         actualitzarCarret('remove', id, 0);
     });
 
-    // Incrementar quantitat (+)
+    // Incrementar/Decrementar quantitat
     $(document).on('click', '.qty-btn.plus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
@@ -232,7 +228,6 @@ $(document).ready(function() {
         actualitzarCarret('update', id, currentQty + 1);
     });
 
-    // Decrementar quantitat (-)
     $(document).on('click', '.qty-btn.minus', function() {
         var id = $(this).data('id');
         var input = $(this).siblings('.qty-input');
@@ -275,15 +270,52 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error("Error checkout:", error);
-                alert("Error de comunicació. Revisa que no hi hagi espais al final dels fitxers PHP (Models).");
+                alert("Error de comunicació. Revisa que hagis tret els '?>' dels fitxers PHP.");
             }
         });
     });
 
 
     // ======================================================
-    // 6. PERFIL D'USUARI (MI CUENTA)
+    // 6. PERFIL D'USUARI (SOLUCIÓ DEFINITIVA)
     // ======================================================
+
+    // Obrir Modal (Fent servir el nou ID #btn-open-profile)
+    $(document).on('click', '#btn-open-profile', function(e) {
+        e.preventDefault();
+        const dialog = document.getElementById('profile-dialog');
+        
+        console.log("Intentant carregar perfil...");
+
+        $.ajax({
+            url: 'controladors/c_profile.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    const u = response.data;
+                    
+                    $('#prof_name').val(u.name);
+                    $('#prof_email').val(u.email);
+                    $('#prof_address').val(u.address);
+                    $('#prof_location').val(u.location);
+                    $('#prof_postcode').val(u.postcode);
+                    
+                    const img = u.avatar ? u.avatar : 'default.png';
+                    $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
+                    
+                    dialog.showModal();
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error AJAX Perfil:", error);
+                console.log("Resposta rebuda:", xhr.responseText);
+                alert("Error carregant el perfil. Molt probablement tens espais o '?>' al final de 'models/m_usuaris.php'.");
+            }
+        });
+    });
 
     // Previsualitzar foto
     $(document).on('change', '#profile-upload', function() {
@@ -331,57 +363,19 @@ $(document).ready(function() {
         carregarProducte(productId);
     });
 
-    $(document).on('click', '#btn-open-profile', function(e) {
-        e.preventDefault();
-        
-        console.log("Obrint perfil..."); // Para ver si funciona en consola
-        const dialog = document.getElementById('profile-dialog');
-        
-        $.ajax({
-            url: 'controladors/c_profile.php',
-            type: 'GET',
-            dataType: 'json', 
-            success: function(response) {
-                if (response.success) {
-                    const u = response.data;
-                    
-                    $('#prof_name').val(u.name);
-                    $('#prof_email').val(u.email);
-                    $('#prof_address').val(u.address);
-                    $('#prof_location').val(u.location);
-                    $('#prof_postcode').val(u.postcode);
-                    
-                    const img = u.avatar ? u.avatar : 'default.png';
-                    $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
-                    
-                    dialog.showModal();
-                } else {
-                    alert("Error: " + response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("Error AJAX Perfil:", error);
-                // Si sale este error, es que NO has borrado los ?> de los PHP
-                alert("Error de comunicación. ¡Asegúrate de haber borrado los '?>' finales en m_usuaris.php!");
-            }
-        });
-    });
-
 }); // FI DEL $(document).ready
 
 
 // ======================================================
-// FUNCIONS GLOBALS (FORA DEL READY)
+// FUNCIONS AUXILIARS GLOBALS
 // ======================================================
 
-// Funció per carregar detalls del producte al modal
 function carregarProducte(productId) {
     $.ajax({
         url: 'controladors/c_productes.php',
         type: 'GET',
         data: { product_id: productId },
         success: function(response) {
-            // Intentem parsejar per si de cas arriba text brut
             try {
                 var p = typeof response === "object" ? response : JSON.parse(response);
             } catch (e) {
@@ -403,7 +397,6 @@ function carregarProducte(productId) {
     });
 }
 
-// Funció per carregar l'HTML del carretó
 function carregarCarret() {
     $.ajax({
         url: 'controladors/c_cart.php',
@@ -415,7 +408,6 @@ function carregarCarret() {
     });
 }
 
-// Funció per actualitzar ítems del carretó
 function actualitzarCarret(accio, id, qty) {
     $.ajax({
         url: 'controladors/c_cart.php',
@@ -427,41 +419,6 @@ function actualitzarCarret(accio, id, qty) {
     });
 }
 
-// Funció per obrir el modal de perfil i carregar dades
-function openProfileModal() {
-    const dialog = document.getElementById('profile-dialog');
-    
-    $.ajax({
-        url: 'controladors/c_profile.php',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                const u = response.data;
-                
-                $('#prof_name').val(u.name);
-                $('#prof_email').val(u.email);
-                $('#prof_address').val(u.address);
-                $('#prof_location').val(u.location);
-                $('#prof_postcode').val(u.postcode);
-                
-                const img = u.avatar ? u.avatar : 'default.png';
-                $('#profile-preview').attr('src', './assets/img_usuaris/' + img);
-                
-                dialog.showModal();
-            } else {
-                alert("Error: " + response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error AJAX Perfil:", error);
-            console.log("Resposta rebuda:", xhr.responseText);
-            alert("No s'han pogut carregar les dades. Revisa la consola.");
-        }
-    });
-}
-
-// Helpers per modals d'autenticació
 function openAuthModal() {
     const dialog = document.getElementById('auth-dialog');
     dialog.classList.remove('show-register');
