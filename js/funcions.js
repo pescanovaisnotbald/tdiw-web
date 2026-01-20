@@ -256,6 +256,47 @@ $(document).ready(function() {
         });
     }
 
+    $(document).on('click', '.checkout-btn', function(e) {
+        e.preventDefault();
+        
+        // Confirmació senzilla
+        if(!confirm("Estàs segur que vols finalitzar la comanda?")) return;
+
+        $.ajax({
+            url: 'controladors/c_cart.php',
+            type: 'POST',
+            data: { action: 'checkout' },
+            dataType: 'json', // Esperem un JSON de resposta
+            success: function(response) {
+                if (response.success) {
+                    alert("Comanda realitzada amb èxit!");
+                    
+                    // Tanquem el modal
+                    document.getElementById('cart-dialog').close();
+                    
+                    // Actualitzem el contador del carretó a 0
+                    $('#cart-count').hide().text('0');
+                    
+                    // Opcional: Recarregar pàgina
+                    // window.location.reload();
+                } else {
+                    if (response.message === 'login_required') {
+                        alert("Has d'iniciar sessió per comprar.");
+                        document.getElementById('cart-dialog').close();
+                        openAuthModal(); // Obrim el modal de login
+                    } else if (response.message === 'empty_cart') {
+                        alert("El carretó està buit.");
+                    } else {
+                        alert("Hi ha hagut un error al processar la comanda.");
+                    }
+                }
+            },
+            error: function() {
+                alert("Error de comunicació amb el servidor.");
+            }
+        });
+    });
+    
 });
 
 function carregarProducte(productId) {
