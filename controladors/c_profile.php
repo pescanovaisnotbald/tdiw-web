@@ -13,7 +13,7 @@ if (!isset($_SESSION['usuari_id'])) {
 $conn = connectaBD();
 $usuari_id = $_SESSION['usuari_id'];
 
-// GET: Obtenir dades
+// Para GET, obtenemos los datos del usuario
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $dades = obtenirDadesUsuari($conn, $usuari_id);
     if ($dades) {
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// POST: Actualitzar dades
+// Para POST, actualizamos los datos
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $dades = [
@@ -35,10 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'postcode' => $_POST['postcode'] ?? ''
     ];
 
-    // --- GESTIÓ DE LA IMATGE ---
+    // Manejamos la subida de imagen
     if (isset($_FILES['avatar']) && $_FILES['avatar']['size'] > 0) {
         
-        // 1. Mirem si hi ha hagut error de pujada
+        // Comprobamos si hay error en la subida
         if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
             echo json_encode(['success' => false, 'message' => 'Error pujada PHP (Codi: ' . $_FILES['avatar']['error'] . ')']);
             exit;
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $uploadDir = __DIR__ . '/../assets/img_usuaris/';
         
-        // 2. Intentem crear la carpeta si no existeix
+        // Creamos la carpeta si no existe
         if (!file_exists($uploadDir)) {
             if (!mkdir($uploadDir, 0777, true)) {
                 echo json_encode(['success' => false, 'message' => 'No s\'ha pogut crear la carpeta img_usuaris. Revisa permisos.']);
@@ -58,30 +58,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $extension = strtolower($fileInfo['extension']);
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         
-        // 3. Validem extensió
+        // Validamos la extensión del archivo
         if (!in_array($extension, $allowed)) {
             echo json_encode(['success' => false, 'message' => 'Format no vàlid. Només JPG, PNG, GIF o WEBP.']);
             exit;
         }
 
-        // 4. Movem l'arxiu
+        // Movemos el archivo a la carpeta
         $newFileName = 'user_' . $usuari_id . '_' . time() . '.' . $extension;
         $destPath = $uploadDir . $newFileName;
 
         if (move_uploaded_file($_FILES['avatar']['tmp_name'], $destPath)) {
             $dades['avatar'] = $newFileName;
         } else {
-            // Aquest és l'error més comú si fallen els permisos
+            // Error común por permisos
             echo json_encode(['success' => false, 'message' => 'Error de permisos: No es pot escriure a assets/img_usuaris.']);
             exit;
         }
     }
 
-    // Actualitzem a la BDD
+    // Actualizamos en la base de datos
     $resultat = actualitzarUsuari($conn, $usuari_id, $dades);
 
     if ($resultat) {
-        $_SESSION['name'] = $dades['name']; // Actualitzem sessió
+        $_SESSION['name'] = $dades['name']; // Actualizamos la sesión
         echo json_encode(['success' => true, 'avatar' => $dades['avatar'] ?? null]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Error SQL al guardar.']);

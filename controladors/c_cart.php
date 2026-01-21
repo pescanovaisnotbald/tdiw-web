@@ -2,12 +2,12 @@
 session_start();
 include_once __DIR__ . '/../models/m_connectaBD.php';
 include_once __DIR__ . '/../models/m_productes.php';
-include_once __DIR__ . '/../models/m_comandes.php'; // <--- AQUESTA ÉS LA LÍNIA QUE FALTAVA!
+include_once __DIR__ . '/../models/m_comandes.php';
 
 $connexio = connectaBD();
 $accio = $_REQUEST['action'] ?? 'view';
 
-// Inicialitzem el carretó si no existeix
+// Iniciamos el carrito si no existe
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
@@ -27,19 +27,19 @@ switch ($accio) {
         break;
     
     case 'checkout':
-        // 1. Verifiquem si l'usuari està loguejat
+        // Comprobamos si el usuario está logueado
         if (!isset($_SESSION['usuari_id'])) {
             echo json_encode(['success' => false, 'message' => 'login_required']);
             exit;
         }
 
-        // 2. Verifiquem si el carretó està buit
+        // Comprobamos si el carrito está vacío
         if (empty($_SESSION['cart'])) {
             echo json_encode(['success' => false, 'message' => 'empty_cart']);
             exit;
         }
 
-        // 3. Calculem totals
+        // Calculamos los totales
         $total_import = 0;
         $total_elements = 0;
         $linies_per_inserir = [];
@@ -53,17 +53,16 @@ switch ($accio) {
             }
         }
 
-        // 4. Inserim la Comanda (Capçalera)
-        // Aquesta funció és la que donava error perquè no teníem el fitxer inclòs
+        // Insertamos la orden (cabecera)
         $comanda_id = inserirComanda($connexio, $_SESSION['usuari_id'], $total_import, $total_elements);
 
         if ($comanda_id) {
-            // 5. Inserim les línies
+            // Insertamos las líneas
             foreach ($linies_per_inserir as $linia) {
                 inserirLiniaComanda($connexio, $comanda_id, $linia['producte'], $linia['qty']);
             }
 
-            // 6. Buidem el carretó
+            // Vaciamos el carrito
             $_SESSION['cart'] = [];
             
             echo json_encode(['success' => true]);

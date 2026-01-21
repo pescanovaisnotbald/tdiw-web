@@ -5,7 +5,7 @@ include_once __DIR__.'/../models/m_categories.php';
 
 $connexio = connectaBD();
 
-// --- CAS 1: DETALL PRODUCTE (JSON per al Modal) ---
+// Caso 1: Devolvemos detalles del producto en JSON para el modal
 if (isset($_GET['product_id']) && !empty($_GET['product_id'])) {      
     $product_id = $_GET['product_id'];
     $producte = infoProducte($connexio, $product_id);
@@ -13,7 +13,7 @@ if (isset($_GET['product_id']) && !empty($_GET['product_id'])) {
     exit;
 }
 
-// Recollim filtres
+// Recogemos los filtros de la URL
 $filtres = [
     'categoria' => $_GET['id_categoria'] ?? null,
     'busqueda'  => $_GET['q'] ?? null,
@@ -22,14 +22,14 @@ $filtres = [
     'orden'     => $_GET['orden'] ?? null
 ];
 
-// Consultem productes
+// Consultamos los productos filtrados
 $productes = consultaProductesFiltrats($connexio, $filtres);
 
-// --- CAS 2: FILTRATGE VIA AJAX (Retornem només l'HTML de les targetes) ---
+// Caso 2: Para AJAX, devolvemos solo el HTML de las tarjetas de productos
 if (isset($_GET['ajax'])) {
     if (!empty($productes)) {
         foreach ($productes as $fila) {
-            // Generem l'HTML de cada carta directament aquí
+            // Generamos el HTML de cada tarjeta aquí mismo
             echo '<div class="product-card">';
             echo '  <div id="' . $fila['product_id'] . '" class="product-link">';
             echo '      <img class="product-image" src="./assets/productes/' . $fila['imatge'] . '" alt="' . htmlspecialchars($fila['nom']) . '">';
@@ -46,10 +46,10 @@ if (isset($_GET['ajax'])) {
         echo '  <p>Prova de canviar els filtres.</p>';
         echo '</div>';
     }
-    exit; // IMPORTANT: Parem aquí per no carregar la resta de la pàgina
+    exit; // Paramos aquí para no cargar el resto
 }
 
-// --- CAS 3: CÀRREGA NORMAL (Tota la pàgina) ---
+// Caso 3: Carga normal de toda la página
 $llistaCategories = consultaCategories($connexio);
 include __DIR__.'/../vistes/v_productes.php';
 ?>

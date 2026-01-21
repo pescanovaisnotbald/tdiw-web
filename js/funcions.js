@@ -1,11 +1,6 @@
-/**
- * FITXER: js/funcions.js
- * VERSIÓ: DEFINITIVA (AMB SELECTOR QUANTITAT I FIX PREUS)
- */
-
 $(document).ready(function() {
 
-    // 1. NAVEGACIÓ
+    // Navegación
     $(document).on('click', '#user-btn', function(e) {
         e.preventDefault(); e.stopPropagation(); $('#user-dropdown').toggleClass('show');
     });
@@ -29,7 +24,7 @@ $(document).ready(function() {
         }
     });
 
-    // 2. AUTH
+    // Autenticación
     $(document).on('submit', '.auth-form-login', async function(e) {
         e.preventDefault();
         try {
@@ -48,7 +43,7 @@ $(document).ready(function() {
         } catch (e) { alert("Error al registre."); }
     });
 
-    // 3. CERCADOR
+    // Buscador
     $(document).on('click', '#search-toggle', function(e) {
         e.preventDefault();
         const w = $('#search-wrapper'), i = w.find('.search-input');
@@ -58,17 +53,17 @@ $(document).ready(function() {
     $(document).on('click', '#search-clear', function() { $('.search-input').val(''); $(this).hide(); $('#search-form').submit(); });
     if ($('.search-input').val()?.trim()) { $('#search-wrapper').addClass('active'); $('#search-clear').show(); }
 
-    // 4. FILTRES
+    // Filtros
     $(document).on('submit', '.filters-sidebar form', function(e) {
         e.preventDefault();
         $.ajax({ type: "GET", url: 'controladors/c_productes.php', data: $(this).serialize() + '&ajax=true', success: h => $('.products-grid').html(h) });
     });
     $(document).on('change', 'select[name="orden"]', function() { $('.filters-sidebar form').submit(); });
 
-    // 5. CARRETÓ
+    // Carrito
     $(document).on('click', '#cart-btn', function() { document.getElementById('cart-dialog').showModal(); carregarCarret(); });
     
-    // --- NOU: LOGICA QUANTITAT AL MODAL DE PRODUCTE ---
+    // Nueva lógica para seleccionar cantidad en el modal
     $(document).on('click', '#modal-qty-plus', function() {
         var input = $('#modal-qty-input');
         input.val(parseInt(input.val()) + 1);
@@ -79,16 +74,16 @@ $(document).ready(function() {
         if (val > 1) input.val(val - 1);
     });
 
-    // --- MODIFICAT: ARA AFEGEIX LA QUANTITAT SELECCIONADA ---
+    // Ahora añadimos la cantidad seleccionada al carrito
     $(document).on('click', '#modal-add-to-cart-btn', function(e) {
         e.preventDefault();
         const pid = $(this).data('id');
-        const qty = $('#modal-qty-input').val(); // Agafem el valor de l'input
+        const qty = $('#modal-qty-input').val(); // Cogemos la cantidad del input
         
         if(!pid) return;
         $.ajax({
             url: 'controladors/c_cart.php', type: 'POST', 
-            data: { action: 'add', product_id: pid, quantity: qty }, // Enviem la quantitat
+            data: { action: 'add', product_id: pid, quantity: qty }, // Enviamos la cantidad
             success: function(t) { 
                 document.getElementById('product-dialog').close(); 
                 if($('#cart-count').length) $('#cart-count').text(t).show(); 
@@ -121,7 +116,7 @@ $(document).ready(function() {
         });
     });
 
-    // 6. PERFIL
+    // Perfil
     $(document).on('click', '#btn-open-profile', function(e) {
         e.preventDefault();
         $.ajax({
@@ -153,7 +148,7 @@ $(document).ready(function() {
         if (f) { const r = new FileReader(); r.onload = e => $('#profile-preview').attr('src', e.target.result); r.readAsDataURL(f); }
     });
 
-    // 7. HISTORIAL COMANDES
+    // Historial de órdenes
     $(document).on('click', '#btn-orders', function(e) {
         e.preventDefault();
         const c = $('#orders-list');
@@ -187,7 +182,7 @@ $(document).ready(function() {
 
 });
 
-// FUNCIONS GLOBALS
+// Funciones globales
 window.carregarProducte = function(id) {
     $.ajax({
         url: 'controladors/c_productes.php', type: 'GET', data: { product_id: id },
@@ -196,9 +191,9 @@ window.carregarProducte = function(id) {
             $('#modal-product-title').text(p.nom); $('#modal-product-price').text(p.preu + ' €');
             $('#modal-product-description').text(p.descripcio); $('#modal-product-image').attr('src', './assets/productes/' + p.imatge);
             
-            // Dades pel botó
+            // Guardamos datos para el botón de añadir
             $('#modal-add-to-cart-btn').data('id', p.product_id); 
-            // Reset quantitat a 1 cada cop que obrim
+            // Reseteamos la cantidad a 1 al abrir el modal
             $('#modal-qty-input').val(1); 
 
             document.getElementById('product-dialog').showModal();
@@ -209,7 +204,7 @@ window.carregarProducte = function(id) {
 window.carregarCarret = function() { $.ajax({ url: 'controladors/c_cart.php', data: { action: 'view' }, success: h => $('#cart-items-container').html(h) }); };
 window.actualitzarCarret = function(a, id, q) { $.ajax({ url: 'controladors/c_cart.php', type: 'POST', data: { action: a, product_id: id, quantity: q }, success: h => $('#cart-items-container').html(h) }); };
 
-// --- CORRECCIÓ PREU UNITARI ---
+// Corrección: mostramos precio unitario
 window.toggleOrderDetails = function(card, oid) {
     const d = $(card).find('.order-details-mini');
     if (d.is(':visible')) { d.slideUp(); return; }
@@ -224,7 +219,7 @@ window.toggleOrderDetails = function(card, oid) {
             if (r.success && r.detalls) {
                 let h = '';
                 r.detalls.forEach(p => {
-                    // AQUÍ ESTÀ EL CANVI: Mostrem preu_unitari
+                    // Aquí mostramos el precio unitario
                     h += `<div style="display:flex;justify-content:space-between;font-size:0.9rem;color:#555;padding:2px 0">
                             <span>${p.quantitat}x ${p.nom_producte}</span>
                             <span>${parseFloat(p.preu_unitari).toFixed(2)} €/u</span> 
